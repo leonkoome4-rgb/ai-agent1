@@ -1,4 +1,5 @@
 import { TOOL_META, type ActionItem, type Verdict } from "@/lib/actions";
+import type { Lang, Strings } from "@/lib/i18n";
 import SmsPreview from "./SmsPreview";
 
 const VERDICT_STYLE: Record<Verdict, string> = {
@@ -8,19 +9,19 @@ const VERDICT_STYLE: Record<Verdict, string> = {
   SCAM: "bg-red-700 text-white",
 };
 
-export default function ActionsPanel({ actions }: { actions: ActionItem[] }) {
+export default function ActionsPanel({ t, lang, actions }: { t: Strings; lang: Lang; actions: ActionItem[] }) {
   return (
     <section aria-labelledby="actions-title" className="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm">
-      <h2 id="actions-title" className="mb-3 flex items-center gap-2 text-lg font-semibold text-navy">
-        <span aria-hidden>⚡</span> Vitendo · Actions
+      <h2 id="actions-title" className="mb-3 flex items-center gap-2 text-xl font-semibold text-navy">
+        <span aria-hidden>⚡</span> {t.actions}
       </h2>
       <ul aria-live="polite" className="flex flex-col gap-3">
         {actions.length === 0 && (
-          <li className="text-slate-600">When Sema sends an SMS, checks a rumour or sets a reminder, it shows here.</li>
+          <li className="text-lg text-slate-700">{t.actionsEmpty}</li>
         )}
         {actions.map((a) => (
           <li key={a.id} className="sema-in">
-            <ActionCard action={a} />
+            <ActionCard action={a} t={t} lang={lang} />
           </li>
         ))}
       </ul>
@@ -28,8 +29,8 @@ export default function ActionsPanel({ actions }: { actions: ActionItem[] }) {
   );
 }
 
-function ActionCard({ action }: { action: ActionItem }) {
-  const meta = TOOL_META[action.name] ?? { icon: "🛠️", label: action.name };
+function ActionCard({ action, t, lang }: { action: ActionItem; t: Strings; lang: Lang }) {
+  const meta = TOOL_META[action.name] ?? { icon: "🛠️", sw: action.name, en: action.name };
   const r = action.result;
   const args = action.args as Record<string, string | undefined>;
 
@@ -46,10 +47,10 @@ function ActionCard({ action }: { action: ActionItem }) {
           {meta.icon}
         </span>
         <div className="min-w-0 flex-1">
-          <h3 className="font-semibold text-navy">{meta.label}</h3>
-          <p className="truncate text-sm text-slate-700">{r?.summary ?? describeArgs(action)}</p>
+          <h3 className="text-lg font-semibold text-navy">{meta[lang]}</h3>
+          <p className="truncate text-base text-slate-700">{r?.summary ?? describeArgs(action)}</p>
         </div>
-        <StatusBadge status={action.status} />
+        <StatusBadge status={action.status} t={t} />
       </header>
 
       {action.name === "check_claim" && r?.verdict && (
@@ -57,12 +58,16 @@ function ActionCard({ action }: { action: ActionItem }) {
           <p className="flex flex-wrap items-center gap-2">
             <span className={`rounded-full px-3 py-1 text-sm font-bold ${VERDICT_STYLE[r.verdict]}`}>{r.verdict}</span>
             {typeof r.confidence === "number" && (
-              <span className="text-sm text-slate-700">{Math.round(r.confidence)}% sure</span>
+              <span className="text-base text-slate-700">
+                {Math.round(r.confidence)}% {t.sure}
+              </span>
             )}
           </p>
-          {r.reason && <p className="mt-2 text-slate-900">{r.reason}</p>}
+          {r.reason && <p className="mt-2 text-lg text-slate-900">{r.reason}</p>}
           {r.sources && r.sources.length > 0 && (
-            <p className="mt-1 text-sm text-slate-600">Sources: {r.sources.join(", ")}</p>
+            <p className="mt-1 text-base text-slate-700">
+              {t.sources}: {r.sources.join(", ")}
+            </p>
           )}
         </div>
       )}
@@ -70,36 +75,39 @@ function ActionCard({ action }: { action: ActionItem }) {
       {action.name === "create_guide" && r?.url && (
         <p className="mt-2">
           <a href={r.url} target="_blank" rel="noreferrer" className="font-medium text-navy underline underline-offset-4">
-            Open picture guide: {r.title ?? r.url}
+            {t.openGuide}: {r.title ?? r.url}
           </a>
         </p>
       )}
 
       {action.name === "send_email" && (r?.subject ?? args.subject) && (
-        <p className="mt-2 text-sm text-slate-700">Subject: {r?.subject ?? args.subject}</p>
+        <p className="mt-2 text-base text-slate-700">
+          {t.subject}: {r?.subject ?? args.subject}
+        </p>
       )}
 
       {smsText && (
         <div className="mt-3">
-          <SmsPreview to={r?.to ?? args.to} message={smsText} delivered={r ? r.delivered : undefined} />
+          <SmsPreview t={t} to={r?.to ?? args.to} message={smsText} delivered={r ? r.delivered : undefined} />
         </div>
       )}
 
-      {r?.error && <p className="mt-2 text-sm text-red-800">{r.error}</p>}
+      {r?.error && <p className="mt-2 text-base text-red-900">{r.error}</p>}
     </article>
   );
 }
 
-function StatusBadge({ status }: { status: ActionItem["status"] }) {
+function StatusBadge({ status, t }: { status: ActionItem["status"]; t: Strings }) {
   if (status === "running") {
-    return <span className="rounded-full bg-white px-2 py-1 text-xs font-medium text-navy">Working…</span>;
+    return <span className="rounded-full bg-white px-2 py-1 text-sm font-medium text-navy">{t.working}</span>;
   }
   if (status === "failed") {
-    return <span className="rounded-full bg-red-100 px-2 py-1 text-xs font-medium text-red-900">Failed</span>;
+    return <span className="rounded-full bg-red-100 px-2 py-1 text-sm font-medium text-red-900">{t.failed}</span>;
   }
   return (
-    <span className="rounded-full bg-green-100 px-2 py-1 text-xs font-medium text-green-900">
-      <span aria-hidden>✓ </span>Done
+    <span className="rounded-full bg-green-100 px-2 py-1 text-sm font-medium text-green-900">
+      <span aria-hidden>✓ </span>
+      {t.done}
     </span>
   );
 }

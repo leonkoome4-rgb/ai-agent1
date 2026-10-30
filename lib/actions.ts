@@ -44,13 +44,13 @@ export interface ActionItem {
   at: number;
 }
 
-export const TOOL_META: Record<string, { icon: string; label: string }> = {
-  send_sms: { icon: "💬", label: "SMS" },
-  create_guide: { icon: "🖼️", label: "Picture guide" },
-  send_email: { icon: "✉️", label: "Email" },
-  check_claim: { icon: "🔎", label: "Rumour check" },
-  set_reminder: { icon: "⏰", label: "Reminder" },
-  remember_caller: { icon: "🧠", label: "Remembered caller" },
+export const TOOL_META: Record<string, { icon: string; sw: string; en: string }> = {
+  send_sms: { icon: "💬", sw: "SMS", en: "SMS" },
+  create_guide: { icon: "🖼️", sw: "Mwongozo wa picha", en: "Picture guide" },
+  send_email: { icon: "✉️", sw: "Barua pepe", en: "Email" },
+  check_claim: { icon: "🔎", sw: "Kuangalia ukweli", en: "Rumour check" },
+  set_reminder: { icon: "⏰", sw: "Kikumbusho", en: "Reminder" },
+  remember_caller: { icon: "🧠", sw: "Kumkumbuka mpigaji", en: "Remembered caller" },
 };
 
 export function parseArgs(raw: unknown): Record<string, unknown> {

@@ -3,29 +3,39 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import type Vapi from "@vapi-ai/web";
 import { actionsFromMessage, mergeActions, type ActionItem } from "@/lib/actions";
+import type { Lang, Strings } from "@/lib/i18n";
 import Transcript, { type Line } from "./Transcript";
 import ActionsPanel from "./ActionsPanel";
+import MicHelp from "./MicHelp";
 
-type Status = "idle" | "connecting" | "active" | "ending";
+type Status = "idle" | "connecting" | "active" | "ended";
+type Problem = null | "mic-blocked" | "no-mic" | "failed";
 
 const PUBLIC_KEY = process.env.NEXT_PUBLIC_VAPI_PUBLIC_KEY;
 
 export default function CallExperience({
+  t,
+  lang,
   phone,
   assistantId,
 }: {
+  t: Strings;
+  lang: Lang;
   phone?: string;
   assistantId?: string;
 }) {
   const vapiRef = useRef<Vapi | null>(null);
+  const talkRef = useRef<HTMLButtonElement>(null);
+  const endRef = useRef<HTMLButtonElement>(null);
   const [status, setStatus] = useState<Status>("idle");
   const [speaking, setSpeaking] = useState(false);
   const [lines, setLines] = useState<Line[]>([]);
   const [partial, setPartial] = useState<Line | null>(null);
   const [actions, setActions] = useState<ActionItem[]>([]);
-  const [error, setError] = useState<string | null>(null);
+  const [problem, setProblem] = useState<Problem>(null);
 
   const configured = Boolean(PUBLIC_KEY && assistantId);
+  const inCall = status === "connecting" || status === "active";
 
   // Create the Vapi client once, in the browser only.
   useEffect(() => {
@@ -40,7 +50,7 @@ export default function CallExperience({
 
       vapi.on("call-start", () => setStatus("active"));
       vapi.on("call-end", () => {
-        setStatus("idle");
+        setStatus("ended");
         setSpeaking(false);
         setPartial(null);
       });
@@ -48,7 +58,7 @@ export default function CallExperience({
       vapi.on("speech-end", () => setSpeaking(false));
       vapi.on("error", (e: unknown) => {
         console.error("Vapi error", e);
-        setError(readableError(e));
+        setProblem(isPermissionError(e) ? "mic-blocked" : "failed");
         setStatus("idle");
         setSpeaking(false);
       });
@@ -79,10 +89,24 @@ export default function CallExperience({
     };
   }, []);
 
+  // Keep keyboard focus on the button that is on screen.
+  useEffect(() => {
+    if (inCall) endRef.current?.focus();
+    else if (status === "ended") talkRef.current?.focus();
+  }, [inCall, status]);
+
   const startCall = useCallback(async () => {
     const vapi = vapiRef.current;
     if (!vapi || !assistantId) return;
-    setError(null);
+    setProblem(null);
+
+    // Ask for the mic ourselves first, so we can explain clearly if it is blocked.
+    const mic = await checkMicrophone();
+    if (mic !== "ok") {
+      setProblem(mic);
+      return;
+    }
+
     setLines([]);
     setPartial(null);
     setActions([]);
@@ -91,86 +115,120 @@ export default function CallExperience({
       const call = await vapi.start(assistantId);
       if (!call) setStatus("idle");
     } catch (e) {
-      setError(readableError(e));
+      setProblem(isPermissionError(e) ? "mic-blocked" : "failed");
       setStatus("idle");
     }
   }, [assistantId]);
 
   const endCall = useCallback(() => {
-    setStatus("ending");
     vapiRef.current?.stop();
+    setStatus("ended");
+    setSpeaking(false);
   }, []);
 
-  const inCall = status === "active" || status === "connecting" || status === "ending";
+  const stateLabel =
+    status === "connecting"
+      ? t.connecting
+      : status === "active"
+        ? speaking
+          ? t.speaking
+          : t.listening
+        : status === "ended"
+          ? t.ended
+          : "";
 
   return (
     <div className="w-full">
-      {/* Call button */}
-      <section aria-label="Call Sema" className="flex flex-col items-center gap-5 py-6">
-        <div className="relative flex h-56 w-56 items-center justify-center sm:h-64 sm:w-64">
-          {speaking && (
+      <section id="call" tabIndex={-1} aria-label={t.talk} className="flex flex-col items-center gap-5 py-6 outline-none">
+        {/* The big circle: a button before the call, a status display during it. */}
+        <div className="relative flex h-56 w-56 items-center justify-center sm:h-72 sm:w-72">
+          {status === "active" && !speaking && (
             <>
-              <span aria-hidden className="sema-ring absolute inset-6 rounded-full bg-sky" />
-              <span aria-hidden className="sema-ring sema-ring-delay absolute inset-6 rounded-full bg-sky" />
+              <span aria-hidden className="sema-ring absolute inset-8 rounded-full bg-sky" />
+              <span aria-hidden className="sema-ring sema-ring-delay absolute inset-8 rounded-full bg-sky" />
             </>
           )}
-          <button
-            type="button"
-            onClick={inCall ? endCall : startCall}
-            disabled={!configured || status === "connecting" || status === "ending"}
-            aria-label={inCall ? "Kata simu — End call" : "Piga Sema — Call Sema"}
-            className={`relative z-10 flex h-44 w-44 flex-col items-center justify-center gap-2 rounded-full text-white shadow-xl transition-transform active:scale-95 disabled:cursor-not-allowed disabled:opacity-60 sm:h-52 sm:w-52 ${
-              inCall ? "bg-red-700 hover:bg-red-800" : "bg-navy hover:bg-navy-dark"
-            }`}
-          >
-            {inCall ? <HangUpIcon /> : <PhoneIcon />}
-            <span className="text-xl font-semibold leading-tight">
-              {status === "connecting" ? "Inapiga…" : inCall ? "Kata simu" : "Piga Sema"}
-            </span>
-            <span className="text-sm opacity-90">
-              {status === "connecting" ? "Connecting…" : inCall ? "End call" : "Call Sema"}
-            </span>
-          </button>
+          {status === "connecting" && (
+            <span aria-hidden className="sema-spin absolute inset-4 rounded-full border-8 border-sky-light border-t-sky" />
+          )}
+
+          {inCall ? (
+            <div
+              aria-hidden
+              className="relative z-10 flex h-48 w-48 flex-col items-center justify-center gap-3 rounded-full bg-navy text-white shadow-xl sm:h-56 sm:w-56"
+            >
+              {speaking ? <SpeakingBars /> : <MicIcon size={72} />}
+            </div>
+          ) : (
+            <button
+              ref={talkRef}
+              type="button"
+              onClick={startCall}
+              disabled={!configured}
+              aria-label={t.talkAria}
+              className="relative z-10 flex h-48 w-48 flex-col items-center justify-center gap-2 rounded-full bg-navy px-4 text-white shadow-xl transition-transform hover:bg-navy-dark active:scale-95 disabled:cursor-not-allowed disabled:bg-slate-500 sm:h-56 sm:w-56"
+            >
+              <MicIcon size={72} />
+              <span className="text-xl font-semibold leading-tight sm:text-2xl">
+                {status === "ended" ? t.talkAgain : t.talk}
+              </span>
+            </button>
+          )}
         </div>
 
-        <div aria-live="polite" className="min-h-8 text-center">
-          {speaking ? (
-            <p className="flex items-center gap-2 font-medium text-navy">
-              <SpeakingBars /> Sema anaongea… <span className="text-slate-600">Sema is speaking</span>
-            </p>
-          ) : status === "active" ? (
-            <p className="font-medium text-navy">
-              🎙️ Ninakusikiliza… <span className="text-slate-600">I&apos;m listening</span>
-            </p>
-          ) : null}
-        </div>
+        {/* Spoken out by screen readers when it changes. */}
+        <p role="status" aria-live="polite" className="text-center text-2xl font-semibold text-navy">
+          {stateLabel}
+        </p>
+
+        {inCall && (
+          <button
+            ref={endRef}
+            type="button"
+            onClick={endCall}
+            aria-label={t.endAria}
+            className="flex min-h-16 w-full max-w-xs items-center justify-center gap-3 rounded-full bg-red-700 px-8 text-2xl font-bold text-white shadow-lg hover:bg-red-800 active:scale-95"
+          >
+            <HangUpIcon />
+            {t.end}
+          </button>
+        )}
 
         {!configured && (
-          <p role="status" className="max-w-sm rounded-xl bg-amber-50 px-4 py-3 text-center text-sm text-amber-900">
-            Web call is not set up yet. Add NEXT_PUBLIC_VAPI_PUBLIC_KEY and VAPI_ASSISTANT_ID to .env.local.
+          <p role="status" className="max-w-sm rounded-2xl bg-amber-50 px-4 py-3 text-center text-lg text-amber-900">
+            {t.notSetup}
           </p>
         )}
-        {error && (
-          <p role="alert" className="max-w-sm rounded-xl bg-red-50 px-4 py-3 text-center text-sm text-red-800">
-            {error}
+
+        {problem === "mic-blocked" && <MicHelp t={t} onRetry={startCall} onClose={() => setProblem(null)} />}
+        {problem === "no-mic" && (
+          <p role="alert" className="max-w-sm rounded-2xl bg-red-50 px-4 py-3 text-center text-lg text-red-900">
+            {t.noMic}
+          </p>
+        )}
+        {problem === "failed" && (
+          <p role="alert" className="max-w-sm rounded-2xl bg-red-50 px-4 py-3 text-center text-lg text-red-900">
+            {t.callFailed}
           </p>
         )}
 
         {phone && (
-          <p className="text-center text-lg text-slate-700">
-            Au piga simu · Or call:{" "}
-            <a href={`tel:${phone.replace(/\s/g, "")}`} className="font-semibold text-navy underline underline-offset-4">
+          <p className="text-center text-xl text-slate-800">
+            {t.orCall}{" "}
+            <a
+              href={`tel:${phone.replace(/[^\d+]/g, "")}`}
+              className="whitespace-nowrap font-bold text-navy underline underline-offset-4"
+            >
               {phone}
             </a>
           </p>
         )}
       </section>
 
-      {/* Live transcript + actions */}
       {(inCall || lines.length > 0 || actions.length > 0) && (
         <div className="grid gap-6 lg:grid-cols-2">
-          <Transcript lines={lines} partial={partial} />
-          <ActionsPanel actions={actions} />
+          <Transcript t={t} lines={lines} partial={partial} />
+          <ActionsPanel t={t} lang={lang} actions={actions} />
         </div>
       )}
     </div>
@@ -187,25 +245,35 @@ function appendLine(prev: Line[], line: Line): Line[] {
   return [...prev, line];
 }
 
-function readableError(e: unknown): string {
-  const text = JSON.stringify(e ?? "").toLowerCase();
-  if (text.includes("permission") || text.includes("notallowed")) {
-    return "Tafadhali ruhusu maikrofoni. Please allow the microphone and try again.";
+async function checkMicrophone(): Promise<"ok" | "mic-blocked" | "no-mic"> {
+  if (!navigator.mediaDevices?.getUserMedia) return "no-mic";
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    stream.getTracks().forEach((track) => track.stop());
+    return "ok";
+  } catch (e) {
+    const name = (e as DOMException)?.name;
+    if (name === "NotFoundError" || name === "OverconstrainedError") return "no-mic";
+    return "mic-blocked";
   }
-  return "Simu imeshindwa. The call failed — please try again.";
 }
 
-function PhoneIcon() {
+function isPermissionError(e: unknown): boolean {
+  const text = JSON.stringify(e ?? "").toLowerCase();
+  return text.includes("permission") || text.includes("notallowed");
+}
+
+function MicIcon({ size }: { size: number }) {
   return (
-    <svg aria-hidden width="56" height="56" viewBox="0 0 24 24" fill="currentColor">
-      <path d="M6.6 10.8a15.1 15.1 0 0 0 6.6 6.6l2.2-2.2a1 1 0 0 1 1-.25 11.4 11.4 0 0 0 3.6.57 1 1 0 0 1 1 1V20a1 1 0 0 1-1 1A17 17 0 0 1 3 4a1 1 0 0 1 1-1h3.5a1 1 0 0 1 1 1c0 1.25.2 2.45.57 3.6a1 1 0 0 1-.25 1z" />
+    <svg aria-hidden width={size} height={size} viewBox="0 0 24 24" fill="currentColor">
+      <path d="M12 14a3 3 0 0 0 3-3V5a3 3 0 1 0-6 0v6a3 3 0 0 0 3 3zm5-3a5 5 0 0 1-10 0H5a7 7 0 0 0 6 6.92V21h2v-3.08A7 7 0 0 0 19 11z" />
     </svg>
   );
 }
 
 function HangUpIcon() {
   return (
-    <svg aria-hidden width="56" height="56" viewBox="0 0 24 24" fill="currentColor">
+    <svg aria-hidden width="36" height="36" viewBox="0 0 24 24" fill="currentColor">
       <path d="M12 9c-1.6 0-3.15.25-4.6.72v3.1a1 1 0 0 1-.56.9 11.5 11.5 0 0 0-2.66 1.85 1 1 0 0 1-1.4 0L.29 13.08a1 1 0 0 1 0-1.41C3.34 8.78 7.46 7 12 7s8.66 1.78 11.71 4.67a1 1 0 0 1 0 1.41l-2.48 2.49a1 1 0 0 1-1.4 0 11.3 11.3 0 0 0-2.67-1.85 1 1 0 0 1-.56-.9v-3.1A15 15 0 0 0 12 9z" />
     </svg>
   );
@@ -213,9 +281,9 @@ function HangUpIcon() {
 
 function SpeakingBars() {
   return (
-    <span aria-hidden className="flex h-5 items-end gap-0.5">
-      {[0, 0.15, 0.3, 0.45].map((d) => (
-        <span key={d} className="sema-bar block h-5 w-1 rounded bg-sky" style={{ animationDelay: `${d}s` }} />
+    <span aria-hidden className="flex h-20 items-end gap-2">
+      {[0, 0.2, 0.4, 0.1, 0.3].map((d, i) => (
+        <span key={i} className="sema-bar block h-20 w-3 rounded-full bg-white" style={{ animationDelay: `${d}s` }} />
       ))}
     </span>
   );
