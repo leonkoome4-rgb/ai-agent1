@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from "next";
+import { Analytics } from "@vercel/analytics/next";
 import { Caveat, DM_Sans, Permanent_Marker } from "next/font/google";
 import "./globals.css";
 
@@ -24,7 +25,11 @@ export const viewport: Viewport = {
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html lang="sw" className={`${dmSans.variable} ${marker.variable} ${caveat.variable} h-full antialiased`}>
-      <body className="min-h-full flex flex-col">{children}</body>
+      <body className="min-h-full flex flex-col">
+        {children}
+        {/* Vercel Web Analytics: counts visitors without cookies. Only runs on Vercel, not in dev. */}
+        <Analytics />
+      </body>
     </html>
   );
 }
