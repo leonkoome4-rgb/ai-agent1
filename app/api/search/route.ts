@@ -1,14 +1,21 @@
-// Vapi tool: search_web(query) -> one short spoken answer from a Tavily web search.
+// Vapi tool: search_web(query) -> Tavily's short answer, trimmed for speech.
 // Vapi format:   https://docs.vapi.ai/tools/custom-tools
 // Tavily format: https://docs.tavily.com/documentation/api-reference/endpoint/search
 
+import { connection } from "next/server";
 import { isAuthorized, oneLine, readToolCalls } from "@/lib/vapi";
-import { cleanForSpeech, websiteName } from "@/lib/speech";
 
-export const maxDuration = 15;
+export const maxDuration = 10;
 
-const TIMEOUT_MS = 8000;
+const TIMEOUT_MS = 5000;
+const MAX_WORDS = 34; // "under 35 words"
 const SORRY = "Samahani, sikupata habari hiyo sasa hivi.";
+
+/** Warm-up: open this URL before the demo so the first real call is fast. */
+export async function GET() {
+  await connection(); // run on every request, never prerendered at build
+  return new Response("ok");
+}
 
 export async function POST(req: Request) {
   if (!isAuthorized(req)) {
@@ -43,8 +50,8 @@ async function searchWeb(query: string): Promise<string> {
       headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
       body: JSON.stringify({
         query: withKenya(query),
-        search_depth: "basic",
-        max_results: 3,
+        search_depth: "ultra-fast",
+        max_results: 2,
         include_answer: true,
       }),
       signal: AbortSignal.timeout(TIMEOUT_MS),
@@ -54,16 +61,22 @@ async function searchWeb(query: string): Promise<string> {
       return SORRY;
     }
 
-    const data: { answer?: string; results?: { url?: string }[] } = await res.json();
-    const answer = cleanForSpeech(data.answer ?? "");
-    if (!answer) return SORRY;
-
-    const source = websiteName(data.results?.[0]?.url);
-    return oneLine(source ? `${answer} Kulingana na ${source}.` : answer);
+    const data: { answer?: string } = await res.json();
+    const answer = oneLine(data.answer ?? "");
+    return answer ? trimWords(answer) : SORRY;
   } catch (e) {
     console.error("search_web:", e instanceof Error ? e.name : e);
     return SORRY;
   }
+}
+
+/** Keep under 35 words; end at the last full sentence that fits, if there is one. */
+function trimWords(text: string): string {
+  const words = text.split(" ");
+  if (words.length <= MAX_WORDS) return text;
+  const cut = words.slice(0, MAX_WORDS).join(" ");
+  const lastStop = Math.max(cut.lastIndexOf(". "), cut.lastIndexOf("? "), cut.lastIndexOf("! "));
+  return lastStop > 0 ? cut.slice(0, lastStop + 1) : `${cut}.`;
 }
 
 // Other countries (English and Kiswahili names). If none is named, we search about Kenya.
