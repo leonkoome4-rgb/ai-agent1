@@ -1,12 +1,13 @@
 import type { Metadata, Viewport } from "next";
-import { Atkinson_Hyperlegible_Next } from "next/font/google";
+import { Caveat, DM_Sans, Permanent_Marker } from "next/font/google";
 import "./globals.css";
 
-// Designed by the Braille Institute for readers with low vision.
-const sans = Atkinson_Hyperlegible_Next({
-  variable: "--font-sans-loaded",
-  subsets: ["latin"],
-});
+// Body text: clean and easy to read.
+const dmSans = DM_Sans({ variable: "--font-dm", subsets: ["latin"] });
+// Big titles only: a bold marker pen.
+const marker = Permanent_Marker({ variable: "--font-marker-loaded", subsets: ["latin"], weight: "400" });
+// Small hand-written notes.
+const caveat = Caveat({ variable: "--font-caveat", subsets: ["latin"] });
 
 export const metadata: Metadata = {
   title: "Sema AI — Your AI helper. One call away.",
@@ -17,12 +18,12 @@ export const metadata: Metadata = {
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
-  themeColor: "#f7f6f2",
+  themeColor: "#24130c",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html lang="sw" className={`${sans.variable} h-full antialiased`}>
+    <html lang="sw" className={`${dmSans.variable} ${marker.variable} ${caveat.variable} h-full antialiased`}>
       <body className="min-h-full flex flex-col">{children}</body>
     </html>
   );

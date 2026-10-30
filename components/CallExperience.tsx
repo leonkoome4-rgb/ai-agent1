@@ -148,36 +148,34 @@ export default function CallExperience({
 
   const showConversation = inCall || lines.length > 0;
   const dot =
-    status === "active" ? (speaking ? "bg-navy" : "bg-sky") : status === "connecting" ? "bg-amber-500" : "bg-muted";
+    status === "active" ? (speaking ? "bg-clay" : "bg-gold") : status === "connecting" ? "bg-amber-500" : "bg-muted";
 
   return (
     <div className="grid gap-10 lg:grid-cols-[minmax(0,5fr)_minmax(0,6fr)] lg:grid-rows-[auto_1fr] lg:gap-x-16">
       {/* What Sema is, and the call itself. */}
       <div>
-        <h1 className="text-3xl font-bold leading-tight tracking-tight sm:text-4xl">{t.tagline}</h1>
-        <p className="mt-3 max-w-prose text-lg leading-relaxed text-muted">{t.intro}</p>
-
         <section
           id="call"
           tabIndex={-1}
           aria-label={t.talk}
-          className="mt-8 flex flex-col items-center gap-5 outline-none sm:items-start"
+          className="flex flex-col items-center gap-5 outline-none sm:items-start"
         >
           <div className="relative flex h-48 w-48 items-center justify-center">
+            {!inCall && <KitengeRing />}
             {status === "active" && !speaking && (
-              <span aria-hidden className="sema-ring absolute inset-0 rounded-full bg-sky" />
+              <span aria-hidden className="sema-ring absolute inset-0 rounded-full bg-gold" />
             )}
             {status === "connecting" && (
               <span
                 aria-hidden
-                className="sema-spin absolute -inset-2 rounded-full border-4 border-line border-t-navy"
+                className="sema-spin absolute -inset-2 rounded-full border-4 border-line border-t-clay"
               />
             )}
 
             {inCall ? (
               <div
                 aria-hidden
-                className="relative flex h-full w-full items-center justify-center rounded-full bg-navy text-white"
+                className="relative flex h-full w-full items-center justify-center rounded-full bg-clay text-white"
               >
                 {speaking ? <SpeakingBars /> : <MicIcon size={64} />}
               </div>
@@ -188,7 +186,7 @@ export default function CallExperience({
                 onClick={startCall}
                 disabled={!configured}
                 aria-label={t.talkAria}
-                className="relative flex h-full w-full flex-col items-center justify-center gap-2 rounded-full bg-navy px-6 text-white shadow-sm transition hover:bg-navy-dark active:scale-[0.98] disabled:cursor-not-allowed disabled:bg-muted"
+                className="pop relative flex h-full w-full flex-col items-center justify-center gap-2 rounded-full bg-clay px-6 text-white shadow-[0_14px_30px_-12px_rgba(194,80,42,0.7)] transition hover:bg-clay-dark active:scale-[0.97] disabled:cursor-not-allowed disabled:bg-muted"
               >
                 <MicIcon size={56} />
                 <span className="text-xl font-bold leading-tight">{status === "ended" ? t.talkAgain : t.talk}</span>
@@ -229,7 +227,7 @@ export default function CallExperience({
               {t.orCall}{" "}
               <a
                 href={`tel:${phone.replace(/[^\d+]/g, "")}`}
-                className="whitespace-nowrap font-bold text-navy underline underline-offset-4"
+                className="whitespace-nowrap font-bold text-clay-ink underline underline-offset-4"
               >
                 {phone}
               </a>
@@ -245,7 +243,7 @@ export default function CallExperience({
           <Transcript t={t} lines={lines} partial={partial} />
         ) : (
           <section aria-labelledby="try-title" className="rounded-xl border border-line bg-surface">
-            <h2 id="try-title" className="border-b border-line px-5 py-4 text-lg font-bold">
+            <h2 id="try-title" className="border-b border-line px-5 py-3 font-hand text-3xl text-clay-ink">
               {t.tryAsking}
             </h2>
             <ul className="divide-y divide-line">
@@ -267,13 +265,26 @@ export default function CallExperience({
           <dl className="mt-4 grid gap-x-8 gap-y-5 sm:grid-cols-2">
             {t.features.map((f) => (
               <div key={f.title}>
-                <dt className="font-bold">{f.title}</dt>
+                <dt className="flex items-center gap-2 font-bold">
+                  <span aria-hidden className="h-2.5 w-2.5 rotate-45 bg-gold" />
+                  {f.title}
+                </dt>
                 <dd className="mt-1 text-muted">{f.text}</dd>
               </div>
             ))}
           </dl>
       </section>
     </div>
+  );
+}
+
+/** Diamonds and dots, like kitenge cloth, in a slowly turning ring. */
+function KitengeRing() {
+  return (
+    <svg aria-hidden className="spin-slow absolute -inset-5" viewBox="0 0 232 232">
+      <circle cx="116" cy="116" r="110" fill="none" stroke="#E2A43A" strokeWidth="3" strokeDasharray="1 13" strokeLinecap="round" />
+      <circle cx="116" cy="116" r="103" fill="none" stroke="#C2502A" strokeWidth="6" strokeDasharray="6 8" />
+    </svg>
   );
 }
 

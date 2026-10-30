@@ -64,7 +64,8 @@ Accessibility is the main track, so it shaped every design choice:
 - **Clear call states, in words:** *Inaunganisha* (Connecting), *Sema anasikiliza* (Listening) with a pulsing ring, *Sema anaongea* (Speaking) with sound bars, and *Imeisha* (Call ended). A big red **End** button.
 - **Screen readers:** call states are announced through an `aria-live` region, captions sit in a `role="log"`, and all buttons have labels.
 - **Keyboard:** a skip link, a visible focus ring, and focus moves to the End button when a call starts.
-- **Contrast:** every text colour pair is at least **4.76:1** (WCAG AA needs 4.5:1).
+- **Contrast:** every text colour pair is at least **4.7:1** (WCAG AA needs 4.5:1).
+- **Design:** a warm Kenyan sunset theme (earth brown, savanna sand, terracotta, ochre gold), kitenge patterns and acacia trees. Body text uses DM Sans for easy reading; the marker and hand-written fonts are only used for short titles and notes.
 - **Mic blocked?** A friendly picture shows exactly where to click to allow the microphone.
 - **Reduced motion** is respected: the animations stop.
 - **Small screens:** the layout works on cheap phones, and every button is at least 44px tall.

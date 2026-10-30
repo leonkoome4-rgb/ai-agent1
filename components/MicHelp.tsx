@@ -27,7 +27,7 @@ export default function MicHelp({ t, onRetry, onClose }: { t: Strings; onRetry: 
       <ol className="mt-4 flex flex-col gap-3">
         {t.micSteps.map((step, i) => (
           <li key={i} className="flex items-start gap-3 text-lg">
-            <span aria-hidden className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-navy font-bold text-white">
+            <span aria-hidden className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-clay font-bold text-white">
               {i + 1}
             </span>
             <span>{step}</span>
@@ -39,7 +39,7 @@ export default function MicHelp({ t, onRetry, onClose }: { t: Strings; onRetry: 
         <button
           type="button"
           onClick={onRetry}
-          className="min-h-14 flex-1 rounded-xl bg-navy px-6 text-xl font-bold text-white transition hover:bg-navy-dark active:scale-[0.98]"
+          className="min-h-14 flex-1 rounded-xl bg-clay px-6 text-xl font-bold text-white transition hover:bg-clay-dark active:scale-[0.98]"
         >
           {t.tryAgain}
         </button>
@@ -61,7 +61,7 @@ function MicPicture({ t }: { t: Strings }) {
     <div aria-hidden className="mx-auto mt-4 w-full max-w-[17rem] rounded-[1.75rem] border-[6px] border-ink bg-paper p-2">
       {/* Address bar */}
       <div className="flex items-center gap-2 rounded-full bg-white px-2 py-1.5 shadow-sm">
-        <span className="relative flex h-8 w-8 items-center justify-center rounded-full bg-sky-light text-base">
+        <span className="relative flex h-8 w-8 items-center justify-center rounded-full bg-gold-light text-base">
           🔒
           <span className="absolute -inset-1 rounded-full border-[3px] border-red-700" />
         </span>

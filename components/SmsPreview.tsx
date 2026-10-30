@@ -33,7 +33,7 @@ function linkify(text: string) {
   const parts = text.split(/(https?:\/\/\S+)/g);
   return parts.map((p, i) =>
     /^https?:\/\//.test(p) ? (
-      <a key={i} href={p} target="_blank" rel="noreferrer" className="font-bold text-navy underline">
+      <a key={i} href={p} target="_blank" rel="noreferrer" className="font-bold text-clay-ink underline">
         {p}
       </a>
     ) : (

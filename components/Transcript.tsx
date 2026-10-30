@@ -46,7 +46,7 @@ function Row({ line, t, live }: { line: Line; t: Strings; live?: boolean }) {
   const isSema = line.role === "assistant";
   return (
     <div className="sema-in py-3">
-      <p className={`text-sm font-bold ${isSema ? "text-navy" : "text-muted"}`}>{isSema ? t.sema : t.you}</p>
+      <p className={`text-sm font-bold ${isSema ? "text-clay-ink" : "text-muted"}`}>{isSema ? t.sema : t.you}</p>
       <p className={`mt-0.5 text-xl leading-relaxed sm:text-2xl ${live ? "text-muted" : ""}`}>{line.text}</p>
     </div>
   );

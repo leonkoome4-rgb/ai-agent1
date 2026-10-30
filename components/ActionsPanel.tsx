@@ -40,7 +40,7 @@ function ActionRow({ action, t, lang }: { action: ActionItem; t: Strings; lang: 
   return (
     <article>
       <header className="flex items-start gap-3">
-        <span className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-paper text-navy">
+        <span className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-paper text-clay-ink">
           <Icon name={action.name} />
         </span>
         <div className="min-w-0 flex-1">
@@ -75,7 +75,7 @@ function ActionRow({ action, t, lang }: { action: ActionItem; t: Strings; lang: 
 
         {action.name === "create_guide" && r?.url && (
           <p className="mt-2">
-            <a href={r.url} target="_blank" rel="noreferrer" className="font-bold text-navy underline underline-offset-4">
+            <a href={r.url} target="_blank" rel="noreferrer" className="font-bold text-clay-ink underline underline-offset-4">
               {t.openGuide}: {r.title ?? r.url}
             </a>
           </p>
@@ -103,7 +103,7 @@ function Status({ status, t }: { status: ActionItem["status"]; t: Strings }) {
   if (status === "running") {
     return (
       <span className="flex shrink-0 items-center gap-2 text-sm font-bold text-muted">
-        <span aria-hidden className="sema-spin h-3.5 w-3.5 rounded-full border-2 border-line border-t-navy" />
+        <span aria-hidden className="sema-spin h-3.5 w-3.5 rounded-full border-2 border-line border-t-clay" />
         {t.working}
       </span>
     );
