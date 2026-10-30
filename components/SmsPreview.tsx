@@ -15,7 +15,7 @@ export default function SmsPreview({
   return (
     <figure
       aria-label={`${t.smsPreview}${to ? ` → ${to}` : ""}`}
-      className="mx-auto w-full max-w-[16rem] rounded-[2rem] border-[6px] border-slate-800 bg-slate-100 p-3 shadow-lg"
+      className="on-light mx-auto w-full max-w-[16rem] rounded-[2rem] border-[6px] border-slate-950 bg-slate-100 p-3 shadow-2xl ring-1 ring-white/20"
     >
       <div aria-hidden className="mx-auto mb-2 h-1.5 w-12 rounded-full bg-slate-800" />
       <p className="mb-2 text-center text-sm font-medium text-slate-700">

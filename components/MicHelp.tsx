@@ -15,7 +15,7 @@ export default function MicHelp({ t, onRetry, onClose }: { t: Strings; onRetry: 
   return (
     <section
       aria-labelledby="mic-help-title"
-      className="sema-in w-full max-w-md rounded-3xl border-2 border-navy bg-white p-5 shadow-lg"
+      className="on-light sema-in w-full max-w-md rounded-3xl border-2 border-sky bg-white p-5 text-slate-900 shadow-2xl shadow-sky/20"
     >
       <h2 id="mic-help-title" ref={titleRef} tabIndex={-1} className="flex items-center gap-2 text-2xl font-bold text-navy outline-none">
         <span aria-hidden>🎙️</span> {t.micTitle}

@@ -11,13 +11,13 @@ const VERDICT_STYLE: Record<Verdict, string> = {
 
 export default function ActionsPanel({ t, lang, actions }: { t: Strings; lang: Lang; actions: ActionItem[] }) {
   return (
-    <section aria-labelledby="actions-title" className="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm">
-      <h2 id="actions-title" className="mb-3 flex items-center gap-2 text-xl font-semibold text-navy">
+    <section aria-labelledby="actions-title" className="glass sema-in rounded-3xl p-5">
+      <h2 id="actions-title" className="mb-4 flex items-center gap-2 text-xl font-semibold">
         <span aria-hidden>⚡</span> {t.actions}
       </h2>
       <ul aria-live="polite" className="flex flex-col gap-3">
         {actions.length === 0 && (
-          <li className="text-lg text-slate-700">{t.actionsEmpty}</li>
+          <li className="text-lg text-white/70">{t.actionsEmpty}</li>
         )}
         {actions.map((a) => (
           <li key={a.id} className="sema-in">
@@ -41,20 +41,20 @@ function ActionCard({ action, t, lang }: { action: ActionItem; t: Strings; lang:
       : undefined;
 
   return (
-    <article className="rounded-2xl bg-sky-light p-3">
+    <article className={`rounded-2xl border bg-white/5 p-3 transition-colors ${action.status === "running" ? "border-sky/60 shadow-[0_0_24px_rgba(63,166,221,0.25)]" : "border-white/10"}`}>
       <header className="flex items-center gap-3">
-        <span aria-hidden className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-white text-2xl shadow-sm">
+        <span aria-hidden className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-white/10 text-2xl">
           {meta.icon}
         </span>
         <div className="min-w-0 flex-1">
-          <h3 className="text-lg font-semibold text-navy">{meta[lang]}</h3>
-          <p className="truncate text-base text-slate-700">{r?.summary ?? describeArgs(action)}</p>
+          <h3 className="text-lg font-semibold">{meta[lang]}</h3>
+          <p className="truncate text-base text-white/75">{r?.summary ?? describeArgs(action)}</p>
         </div>
         <StatusBadge status={action.status} t={t} />
       </header>
 
       {action.name === "check_claim" && r?.verdict && (
-        <div className="mt-3 rounded-xl bg-white p-3">
+        <div className="mt-3 rounded-xl bg-white p-3 text-slate-900">
           <p className="flex flex-wrap items-center gap-2">
             <span className={`rounded-full px-3 py-1 text-sm font-bold ${VERDICT_STYLE[r.verdict]}`}>{r.verdict}</span>
             {typeof r.confidence === "number" && (
@@ -74,14 +74,14 @@ function ActionCard({ action, t, lang }: { action: ActionItem; t: Strings; lang:
 
       {action.name === "create_guide" && r?.url && (
         <p className="mt-2">
-          <a href={r.url} target="_blank" rel="noreferrer" className="font-medium text-navy underline underline-offset-4">
+          <a href={r.url} target="_blank" rel="noreferrer" className="font-medium text-sky underline underline-offset-4">
             {t.openGuide}: {r.title ?? r.url}
           </a>
         </p>
       )}
 
       {action.name === "send_email" && (r?.subject ?? args.subject) && (
-        <p className="mt-2 text-base text-slate-700">
+        <p className="mt-2 text-base text-white/75">
           {t.subject}: {r?.subject ?? args.subject}
         </p>
       )}
@@ -92,7 +92,7 @@ function ActionCard({ action, t, lang }: { action: ActionItem; t: Strings; lang:
         </div>
       )}
 
-      {r?.error && <p className="mt-2 text-base text-red-900">{r.error}</p>}
+      {r?.error && <p className="mt-2 text-base text-red-300">{r.error}</p>}
     </article>
   );
 }
