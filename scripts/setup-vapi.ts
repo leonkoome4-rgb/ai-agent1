@@ -57,6 +57,7 @@ TOOLS
   3. Tell them: "Nimekutumia SMS na picha za hatua." (or the same in their language).
 - For a quick fact or tip with no steps, you can call send_sms alone.
 - Reminders: when asked to be reminded ("nikumbushe…", "remind me…"), call set_reminder with the message and minutesFromNow (a whole number). Confirm the time back to them.
+- Current facts (news, today's prices, weather, sports results, opening hours): call search_web, then say its answer in the caller's language, including the source. Use check_claim instead when they ask if something is true.
 - Email: only send an email when the caller asks. Spell the address back and confirm it before calling send_email.
 - Do not tell the caller about tool names or technical details. If a tool fails, apologise briefly and give the information by voice instead.
 
@@ -68,8 +69,8 @@ const FIRST_MESSAGE = "Habari! Mimi ni Sema, msaidizi wako wa AI. Nikusaidie na 
 // Short spoken line while a tool works. Neutral so it fits any language.
 const waitLine = (text: string) => [{ type: "request-start", content: text, blocking: false }];
 
-function toolServer() {
-  return APP_URL ? { url: `${APP_URL}/api/vapi`, headers: { "x-vapi-secret": SECRET } } : undefined;
+function toolServer(path = "/api/vapi") {
+  return APP_URL ? { url: `${APP_URL}${path}`, headers: { "x-vapi-secret": SECRET } } : undefined;
 }
 
 const tools = [
@@ -167,7 +168,27 @@ const tools = [
       },
     },
   },
-].map((t) => ({ ...t, ...(toolServer() ? { server: toolServer() } : {}) }));
+  {
+    type: "function",
+    function: {
+      name: "search_web",
+      description:
+        "Search the web for current facts: news, prices in Kenya, weather, sports, opening hours, events. Returns one short spoken answer with its source.",
+      parameters: {
+        type: "object",
+        properties: {
+          query: { type: "string", description: "The question, in the caller's words." },
+        },
+        required: ["query"],
+      },
+    },
+    messages: waitLine("Ngoja kidogo, ninatafuta."),
+    path: "/api/search",
+  },
+].map(({ path, ...t }: { path?: string; [k: string]: unknown }) => {
+  const server = toolServer(path);
+  return server ? { ...t, server } : t;
+});
 
 function transcriber() {
   switch (TRANSCRIBER) {
