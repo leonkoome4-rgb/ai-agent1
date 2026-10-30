@@ -15,18 +15,18 @@ export default function MicHelp({ t, onRetry, onClose }: { t: Strings; onRetry: 
   return (
     <section
       aria-labelledby="mic-help-title"
-      className="on-light sema-in w-full max-w-md rounded-3xl border-2 border-sky bg-white p-5 text-slate-900 shadow-2xl shadow-sky/20"
+      className="sema-in w-full max-w-md rounded-xl border border-line bg-surface p-5"
     >
-      <h2 id="mic-help-title" ref={titleRef} tabIndex={-1} className="flex items-center gap-2 text-2xl font-bold text-navy outline-none">
-        <span aria-hidden>🎙️</span> {t.micTitle}
+      <h2 id="mic-help-title" ref={titleRef} tabIndex={-1} className="text-2xl font-bold outline-none">
+        {t.micTitle}
       </h2>
-      <p className="mt-1 text-lg text-slate-800">{t.micIntro}</p>
+      <p className="mt-1 text-lg text-muted">{t.micIntro}</p>
 
       <MicPicture t={t} />
 
       <ol className="mt-4 flex flex-col gap-3">
         {t.micSteps.map((step, i) => (
-          <li key={i} className="flex items-start gap-3 text-lg text-slate-900">
+          <li key={i} className="flex items-start gap-3 text-lg">
             <span aria-hidden className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-navy font-bold text-white">
               {i + 1}
             </span>
@@ -39,14 +39,14 @@ export default function MicHelp({ t, onRetry, onClose }: { t: Strings; onRetry: 
         <button
           type="button"
           onClick={onRetry}
-          className="min-h-14 flex-1 rounded-full bg-navy px-6 text-xl font-semibold text-white hover:bg-navy-dark"
+          className="min-h-14 flex-1 rounded-xl bg-navy px-6 text-xl font-bold text-white transition hover:bg-navy-dark active:scale-[0.98]"
         >
           {t.tryAgain}
         </button>
         <button
           type="button"
           onClick={onClose}
-          className="min-h-14 rounded-full border-2 border-navy px-6 text-xl font-semibold text-navy hover:bg-sky-light"
+          className="min-h-14 rounded-xl border border-line px-6 text-xl font-bold transition hover:bg-paper"
         >
           {t.close}
         </button>
@@ -58,7 +58,7 @@ export default function MicHelp({ t, onRetry, onClose }: { t: Strings; onRetry: 
 /** A simple drawing of a phone browser: lock icon in the address bar, then the "Allow" switch. */
 function MicPicture({ t }: { t: Strings }) {
   return (
-    <div aria-hidden className="mx-auto mt-4 w-full max-w-[17rem] rounded-[1.75rem] border-[6px] border-slate-800 bg-slate-100 p-2">
+    <div aria-hidden className="mx-auto mt-4 w-full max-w-[17rem] rounded-[1.75rem] border-[6px] border-ink bg-paper p-2">
       {/* Address bar */}
       <div className="flex items-center gap-2 rounded-full bg-white px-2 py-1.5 shadow-sm">
         <span className="relative flex h-8 w-8 items-center justify-center rounded-full bg-sky-light text-base">

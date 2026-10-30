@@ -44,13 +44,14 @@ export interface ActionItem {
   at: number;
 }
 
-export const TOOL_META: Record<string, { icon: string; sw: string; en: string }> = {
-  send_sms: { icon: "💬", sw: "SMS", en: "SMS" },
-  create_guide: { icon: "🖼️", sw: "Mwongozo wa picha", en: "Picture guide" },
-  send_email: { icon: "✉️", sw: "Barua pepe", en: "Email" },
-  check_claim: { icon: "🔎", sw: "Kuangalia ukweli", en: "Rumour check" },
-  set_reminder: { icon: "⏰", sw: "Kikumbusho", en: "Reminder" },
-  remember_caller: { icon: "🧠", sw: "Kumkumbuka mpigaji", en: "Remembered caller" },
+export const TOOL_META: Record<string, { sw: string; en: string }> = {
+  send_sms: { sw: "SMS", en: "SMS" },
+  create_guide: { sw: "Mwongozo wa picha", en: "Picture guide" },
+  send_email: { sw: "Barua pepe", en: "Email" },
+  check_claim: { sw: "Kuangalia ukweli", en: "Rumour check" },
+  set_reminder: { sw: "Kikumbusho", en: "Reminder" },
+  search_web: { sw: "Kutafuta mtandaoni", en: "Web search" },
+  remember_caller: { sw: "Kumkumbuka mpigaji", en: "Remembered caller" },
 };
 
 export function parseArgs(raw: unknown): Record<string, unknown> {

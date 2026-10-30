@@ -1,267 +1,54 @@
 @import "tailwindcss";
 
+/*
+ * One brand colour (navy) on warm paper. Sky is used only to show "listening".
+ * Contrast on paper: ink 15.9:1, muted 7.1:1, navy 9.6:1.
+ */
 @theme inline {
+  --color-paper: #f7f6f2;
+  --color-surface: #ffffff;
+  --color-line: #e3e1d9;
+  --color-ink: #1a1930;
+  --color-muted: #55546a;
   --color-navy: #393680;
   --color-navy-dark: #2a2862;
-  --color-night: #0b0a22;
   --color-sky: #3fa6dd;
   --color-sky-light: #e8f5fc;
-  --font-sans: var(--font-poppins), system-ui, sans-serif;
+  --font-sans: var(--font-sans-loaded), system-ui, sans-serif;
 }
 
 body {
-  background: #0b0a22;
-  color: #f5f5fb;
-  font-family: var(--font-poppins), system-ui, sans-serif;
+  background: var(--color-paper);
+  color: var(--color-ink);
+  font-family: var(--font-sans-loaded), system-ui, sans-serif;
 }
 
-/* Visible focus ring: white on the dark page, navy inside light cards. */
+/* Visible focus ring for keyboard users. */
 :focus-visible:not([tabindex="-1"]) {
-  outline: 3px solid #ffffff;
+  outline: 3px solid #393680;
   outline-offset: 3px;
 }
-.on-light :focus-visible {
-  outline-color: #393680;
-}
 
-/* ---------- Aurora background (radial gradients, no blur filter: cheap on old phones) ---------- */
-.aurora {
-  position: fixed;
-  inset: 0;
-  z-index: -1;
-  overflow: hidden;
-  background: radial-gradient(ellipse 120% 80% at 50% -10%, #1d1a5c 0%, #0b0a22 60%);
-}
-.aurora span {
-  position: absolute;
-  border-radius: 9999px;
-  will-change: transform;
-}
-.aurora .a1 {
-  width: 70vmax;
-  height: 70vmax;
-  top: -25vmax;
-  left: -20vmax;
-  background: radial-gradient(circle, rgba(57, 54, 128, 0.9) 0%, transparent 65%);
-  animation: drift-1 22s ease-in-out infinite alternate;
-}
-.aurora .a2 {
-  width: 60vmax;
-  height: 60vmax;
-  top: 5vmax;
-  right: -25vmax;
-  background: radial-gradient(circle, rgba(63, 166, 221, 0.35) 0%, transparent 65%);
-  animation: drift-2 26s ease-in-out infinite alternate;
-}
-.aurora .a3 {
-  width: 55vmax;
-  height: 55vmax;
-  bottom: -25vmax;
-  left: 15vmax;
-  background: radial-gradient(circle, rgba(110, 80, 220, 0.3) 0%, transparent 65%);
-  animation: drift-3 30s ease-in-out infinite alternate;
-}
-/* Fine grain stops the gradients from banding. */
-.aurora::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  opacity: 0.07;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
-}
-@keyframes drift-1 {
-  to {
-    transform: translate(12vmax, 8vmax) scale(1.1);
-  }
-}
-@keyframes drift-2 {
-  to {
-    transform: translate(-14vmax, 10vmax) scale(1.15);
-  }
-}
-@keyframes drift-3 {
-  to {
-    transform: translate(-8vmax, -12vmax) scale(1.05);
-  }
-}
-
-/* ---------- Glass cards ---------- */
-.glass {
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  -webkit-backdrop-filter: blur(16px);
-  backdrop-filter: blur(16px);
-}
-
-/* ---------- Shimmering gradient title ---------- */
-.shine-text {
-  background: linear-gradient(100deg, #ffffff 0%, #ffffff 35%, #8fd3f5 50%, #ffffff 65%, #ffffff 100%);
-  background-size: 250% 100%;
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
-  animation: shine 6s ease-in-out infinite;
-}
-@keyframes shine {
-  0%,
-  100% {
-    background-position: 100% 0;
-  }
-  50% {
-    background-position: 0% 0;
-  }
-}
-
-/* ---------- Rotating greeting: Habari / Hello / Niaje / Sasa ---------- */
-.rotator {
-  display: inline-block;
-  height: 1.5em;
-  overflow: hidden;
-  vertical-align: bottom;
-}
-.rotator > span {
-  display: flex;
-  flex-direction: column;
-  animation: rotate-words 10s cubic-bezier(0.7, 0, 0.3, 1) infinite;
-}
-.rotator > span > span {
-  height: 1.5em;
-  line-height: 1.5em;
-}
-@keyframes rotate-words {
-  0%,
-  20% {
-    transform: translateY(0);
-  }
-  25%,
-  45% {
-    transform: translateY(-1.5em);
-  }
-  50%,
-  70% {
-    transform: translateY(-3em);
-  }
-  75%,
-  95% {
-    transform: translateY(-4.5em);
-  }
-  100% {
-    transform: translateY(-6em);
-  }
-}
-
-/* ---------- The orb (call button) ---------- */
-/* --vol (0..1) is set from Vapi's volume-level event, so the orb grows with Sema's voice. */
-.orb-stage {
-  --vol: 0;
-}
-.orb-vol {
-  transform: scale(calc(1 + var(--vol) * 0.18));
-  transition: transform 0.12s ease-out;
-}
-.orb-breathe {
-  animation: breathe 4.5s ease-in-out infinite;
-}
-@keyframes breathe {
-  0%,
-  100% {
-    transform: scale(1);
-  }
-  50% {
-    transform: scale(1.045);
-  }
-}
-.orb {
-  position: relative;
-  isolation: isolate;
-  overflow: hidden;
-  border-radius: 9999px;
-  background: radial-gradient(circle at 30% 25%, #8fd3f5 0%, #3fa6dd 12%, #393680 46%, #1c1a55 100%);
-  box-shadow:
-    inset 0 -14px 40px rgba(0, 0, 0, 0.5),
-    inset 0 10px 30px rgba(255, 255, 255, 0.15),
-    0 0 50px rgba(63, 166, 221, 0.45),
-    0 20px 60px rgba(0, 0, 0, 0.5);
-  text-shadow: 0 1px 10px rgba(0, 0, 0, 0.55);
-}
-.orb-swirl {
-  position: absolute;
-  inset: -30%;
-  z-index: -1;
-  background: conic-gradient(
-    from 0deg,
-    transparent 0 15%,
-    rgba(63, 166, 221, 0.5) 28%,
-    transparent 42%,
-    rgba(130, 100, 255, 0.4) 62%,
-    transparent 78%
-  );
-  filter: blur(18px);
-  mix-blend-mode: screen;
-  animation: sema-spin 10s linear infinite;
-}
-.orb-shine {
-  position: absolute;
-  top: 8%;
-  left: 18%;
-  width: 40%;
-  height: 22%;
-  z-index: -1;
-  border-radius: 9999px;
-  background: radial-gradient(ellipse, rgba(255, 255, 255, 0.45), transparent 70%);
-}
-.orb:disabled {
-  filter: grayscale(1) brightness(0.8);
-}
-.orb-halo {
-  position: absolute;
-  inset: 0;
-  border-radius: 9999px;
-  background: radial-gradient(circle, rgba(63, 166, 221, 0.4) 0%, transparent 62%);
-  opacity: calc(0.6 + var(--vol) * 0.4);
-  transform: scale(calc(1 + var(--vol) * 0.25));
-  transition:
-    transform 0.12s ease-out,
-    opacity 0.12s ease-out;
-}
-/* Rings that ripple out while Sema listens. */
-.orb-ring {
-  position: absolute;
-  inset: 3rem;
-  border-radius: 9999px;
-  border: 2px solid rgba(63, 166, 221, 0.8);
-  animation: sema-ring 2.2s ease-out infinite;
-}
-.orb-ring-delay {
-  animation-delay: 1.1s;
-}
-/* Spinning arc while connecting. */
-.orb-arc {
-  position: absolute;
-  inset: 2.25rem;
-  border-radius: 9999px;
-  background: conic-gradient(from 0deg, transparent 0 55%, #3fa6dd 85%, #ffffff 100%);
-  -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 6px), #000 calc(100% - 5px));
-  mask: radial-gradient(farthest-side, transparent calc(100% - 6px), #000 calc(100% - 5px));
-  animation: sema-spin 1s linear infinite;
-}
-
+/* Listening: one soft ring around the call button. */
 @keyframes sema-ring {
   0% {
     transform: scale(1);
-    opacity: 0.8;
+    opacity: 0.5;
   }
   100% {
-    transform: scale(1.55);
+    transform: scale(1.3);
     opacity: 0;
   }
 }
+.sema-ring {
+  animation: sema-ring 1.8s ease-out infinite;
+}
 
-/* Equaliser bars for "Sema is speaking". */
+/* Speaking: equaliser bars. */
 @keyframes sema-bar {
   0%,
   100% {
-    transform: scaleY(0.3);
+    transform: scaleY(0.35);
   }
   50% {
     transform: scaleY(1);
@@ -272,16 +59,21 @@ body {
   animation: sema-bar 0.9s ease-in-out infinite;
 }
 
+/* Connecting: spinner. */
 @keyframes sema-spin {
   to {
     transform: rotate(360deg);
   }
 }
+.sema-spin {
+  animation: sema-spin 0.9s linear infinite;
+}
 
+/* New captions and actions fade in. */
 @keyframes sema-in {
   from {
     opacity: 0;
-    transform: translateY(8px) scale(0.98);
+    transform: translateY(4px);
   }
   to {
     opacity: 1;
@@ -289,117 +81,19 @@ body {
   }
 }
 .sema-in {
-  animation: sema-in 0.35s cubic-bezier(0.2, 0.8, 0.2, 1);
+  animation: sema-in 0.2s ease-out;
 }
 
-/* ---------- Scroll reveal ---------- */
-.reveal {
-  opacity: 0;
-  transform: translateY(28px);
-  transition:
-    opacity 0.7s cubic-bezier(0.2, 0.8, 0.2, 1),
-    transform 0.7s cubic-bezier(0.2, 0.8, 0.2, 1);
-}
-.reveal.is-in {
-  opacity: 1;
-  transform: none;
-}
-
-/* ---------- Feature cards: glowing gradient border on hover ---------- */
-.glow-card {
-  position: relative;
-  transition:
-    transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1),
-    background-color 0.3s;
-}
-.glow-card::before {
-  content: "";
-  position: absolute;
-  inset: -1px;
-  border-radius: inherit;
-  padding: 1px;
-  background: linear-gradient(135deg, #3fa6dd, transparent 40%, transparent 60%, #8264ff);
-  -webkit-mask:
-    linear-gradient(#000 0 0) content-box,
-    linear-gradient(#000 0 0);
-  -webkit-mask-composite: xor;
-  mask-composite: exclude;
-  opacity: 0;
-  transition: opacity 0.3s;
-}
-.glow-card:hover {
-  transform: translateY(-4px);
-  background-color: rgba(255, 255, 255, 0.08);
-}
-.glow-card:hover::before {
-  opacity: 1;
-}
-
-/* ---------- Example questions marquee ---------- */
-.marquee {
-  -webkit-mask: linear-gradient(90deg, transparent, #000 10%, #000 90%, transparent);
-  mask: linear-gradient(90deg, transparent, #000 10%, #000 90%, transparent);
-}
-.marquee-track {
-  display: flex;
-  width: max-content;
-  animation: marquee 40s linear infinite;
-}
-.marquee:hover .marquee-track {
-  animation-play-state: paused;
-}
-@keyframes marquee {
-  to {
-    transform: translateX(-50%);
-  }
-}
-
-/* ---------- Reduced motion: stop everything, keep states visible ---------- */
 @media (prefers-reduced-motion: reduce) {
-  .aurora span,
-  .shine-text,
-  .rotator > span,
-  .orb-breathe,
-  .orb-swirl,
-  .orb-arc,
   .sema-bar,
-  .sema-in,
-  .marquee-track {
+  .sema-spin,
+  .sema-in {
     animation: none;
   }
-  .orb-vol,
-  .orb-halo,
-  .glow-card:hover {
-    transform: none;
-  }
-  .orb-ring {
+  /* Keep a still ring so the listening state is still visible. */
+  .sema-ring {
     animation: none;
-    transform: scale(1.15);
-    opacity: 0.5;
-  }
-  .orb-ring-delay {
-    display: none;
-  }
-  .reveal {
-    opacity: 1;
-    transform: none;
-    transition: none;
-  }
-  .marquee {
-    -webkit-mask: none;
-    mask: none;
-  }
-  .marquee-track {
-    width: auto;
-    flex-wrap: wrap;
-    justify-content: center;
-  }
-  .marquee-track > ul {
-    flex-wrap: wrap;
-    justify-content: center;
-    padding-right: 0;
-  }
-  .marquee-copy {
-    display: none;
+    transform: scale(1.12);
+    opacity: 0.45;
   }
 }

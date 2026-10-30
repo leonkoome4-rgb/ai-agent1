@@ -8,6 +8,15 @@ import Transcript, { type Line } from "./Transcript";
 import ActionsPanel from "./ActionsPanel";
 import MicHelp from "./MicHelp";
 
+// Real questions people ask, in the languages they use.
+const EXAMPLES = [
+  "Ng'ombe wangu ana homa, nifanye nini?",
+  "Is it true that hot lemon water cures malaria?",
+  "Nikumbushe kunywa dawa baada ya saa moja.",
+  "Majani ya mahindi yanageuka manjano. Kwa nini?",
+  "How do I cook pilau?",
+];
+
 type Status = "idle" | "connecting" | "active" | "ended";
 type Problem = null | "mic-blocked" | "no-mic" | "failed";
 
@@ -27,7 +36,6 @@ export default function CallExperience({
   const vapiRef = useRef<Vapi | null>(null);
   const talkRef = useRef<HTMLButtonElement>(null);
   const endRef = useRef<HTMLButtonElement>(null);
-  const stageRef = useRef<HTMLDivElement>(null);
   const [status, setStatus] = useState<Status>("idle");
   const [speaking, setSpeaking] = useState(false);
   const [lines, setLines] = useState<Line[]>([]);
@@ -51,15 +59,12 @@ export default function CallExperience({
 
       vapi.on("call-start", () => setStatus("active"));
       vapi.on("call-end", () => {
-        setVolume(stageRef.current, 0);
         setStatus("ended");
         setSpeaking(false);
         setPartial(null);
       });
       vapi.on("speech-start", () => setSpeaking(true));
       vapi.on("speech-end", () => setSpeaking(false));
-      // Grow the orb with Sema's voice. Set as a CSS variable, so React does not re-render each frame.
-      vapi.on("volume-level", (v: number) => setVolume(stageRef.current, v));
       vapi.on("error", (e: unknown) => {
         console.error("Vapi error", e);
         setProblem(isPermissionError(e) ? "mic-blocked" : "failed");
@@ -126,7 +131,6 @@ export default function CallExperience({
 
   const endCall = useCallback(() => {
     vapiRef.current?.stop();
-    setVolume(stageRef.current, 0);
     setStatus("ended");
     setSpeaking(false);
   }, []);
@@ -142,25 +146,40 @@ export default function CallExperience({
           ? t.ended
           : "";
 
-  return (
-    <div className="w-full">
-      <section id="call" tabIndex={-1} aria-label={t.talk} className="flex flex-col items-center gap-4 pt-2 outline-none">
-        {/* The orb: a button before the call, a status display during it. */}
-        <div ref={stageRef} className="orb-stage relative -my-6 flex h-72 w-72 items-center justify-center sm:h-80 sm:w-80">
-          <span aria-hidden className="orb-halo" />
-          {status === "active" && !speaking && (
-            <>
-              <span aria-hidden className="orb-ring" />
-              <span aria-hidden className="orb-ring orb-ring-delay" />
-            </>
-          )}
-          {status === "connecting" && <span aria-hidden className="orb-arc" />}
+  const showConversation = inCall || lines.length > 0;
+  const dot =
+    status === "active" ? (speaking ? "bg-navy" : "bg-sky") : status === "connecting" ? "bg-amber-500" : "bg-muted";
 
-          <div className={`orb-vol relative z-10 h-48 w-48 sm:h-56 sm:w-56 ${inCall ? "" : "orb-breathe"}`}>
+  return (
+    <div className="grid gap-10 lg:grid-cols-[minmax(0,5fr)_minmax(0,6fr)] lg:grid-rows-[auto_1fr] lg:gap-x-16">
+      {/* What Sema is, and the call itself. */}
+      <div>
+        <h1 className="text-3xl font-bold leading-tight tracking-tight sm:text-4xl">{t.tagline}</h1>
+        <p className="mt-3 max-w-prose text-lg leading-relaxed text-muted">{t.intro}</p>
+
+        <section
+          id="call"
+          tabIndex={-1}
+          aria-label={t.talk}
+          className="mt-8 flex flex-col items-center gap-5 outline-none sm:items-start"
+        >
+          <div className="relative flex h-48 w-48 items-center justify-center">
+            {status === "active" && !speaking && (
+              <span aria-hidden className="sema-ring absolute inset-0 rounded-full bg-sky" />
+            )}
+            {status === "connecting" && (
+              <span
+                aria-hidden
+                className="sema-spin absolute -inset-2 rounded-full border-4 border-line border-t-navy"
+              />
+            )}
+
             {inCall ? (
-              <div aria-hidden className="orb flex h-full w-full items-center justify-center text-white">
-                <OrbLayers />
-                {speaking ? <SpeakingBars /> : <MicIcon size={72} />}
+              <div
+                aria-hidden
+                className="relative flex h-full w-full items-center justify-center rounded-full bg-navy text-white"
+              >
+                {speaking ? <SpeakingBars /> : <MicIcon size={64} />}
               </div>
             ) : (
               <button
@@ -169,78 +188,101 @@ export default function CallExperience({
                 onClick={startCall}
                 disabled={!configured}
                 aria-label={t.talkAria}
-                className="orb flex h-full w-full flex-col items-center justify-center gap-2 px-4 text-white transition-transform duration-200 hover:scale-[1.03] active:scale-95 disabled:cursor-not-allowed"
+                className="relative flex h-full w-full flex-col items-center justify-center gap-2 rounded-full bg-navy px-6 text-white shadow-sm transition hover:bg-navy-dark active:scale-[0.98] disabled:cursor-not-allowed disabled:bg-muted"
               >
-                <OrbLayers />
-                <MicIcon size={72} />
-                <span className="text-xl font-semibold leading-tight sm:text-2xl">
-                  {status === "ended" ? t.talkAgain : t.talk}
-                </span>
+                <MicIcon size={56} />
+                <span className="text-xl font-bold leading-tight">{status === "ended" ? t.talkAgain : t.talk}</span>
               </button>
             )}
           </div>
-        </div>
 
-        {/* Spoken out by screen readers when it changes. */}
-        <p role="status" aria-live="polite" className="min-h-8 text-center text-2xl font-semibold text-white">
-          {stateLabel && (
-            <span key={stateLabel} className="sema-in inline-block">
-              {stateLabel}
-            </span>
-          )}
-        </p>
-
-        {inCall && (
-          <button
-            ref={endRef}
-            type="button"
-            onClick={endCall}
-            aria-label={t.endAria}
-            className="flex min-h-16 w-full max-w-xs items-center justify-center gap-3 rounded-full bg-red-700 px-8 text-2xl font-bold text-white shadow-[0_0_40px_rgba(220,38,38,0.45)] transition-transform hover:bg-red-800 active:scale-95"
-          >
-            <HangUpIcon />
-            {t.end}
-          </button>
-        )}
-
-        {!configured && (
-          <p role="status" className="max-w-sm rounded-2xl bg-amber-50 px-4 py-3 text-center text-lg text-amber-900">
-            {t.notSetup}
+          {/* Spoken out by screen readers when it changes. */}
+          <p role="status" aria-live="polite" className="flex items-center gap-2 text-xl font-bold empty:-mt-5">
+            {stateLabel && (
+              <>
+                <span aria-hidden className={`h-2.5 w-2.5 rounded-full ${dot}`} />
+                {stateLabel}
+              </>
+            )}
           </p>
-        )}
 
-        {problem === "mic-blocked" && <MicHelp t={t} onRetry={startCall} onClose={() => setProblem(null)} />}
-        {problem === "no-mic" && (
-          <p role="alert" className="max-w-sm rounded-2xl bg-red-50 px-4 py-3 text-center text-lg text-red-900">
-            {t.noMic}
-          </p>
-        )}
-        {problem === "failed" && (
-          <p role="alert" className="max-w-sm rounded-2xl bg-red-50 px-4 py-3 text-center text-lg text-red-900">
-            {t.callFailed}
-          </p>
-        )}
-
-        {phone && (
-          <p className="text-center text-xl text-white/80">
-            {t.orCall}{" "}
-            <a
-              href={`tel:${phone.replace(/[^\d+]/g, "")}`}
-              className="whitespace-nowrap font-bold text-sky underline underline-offset-4"
+          {inCall && (
+            <button
+              ref={endRef}
+              type="button"
+              onClick={endCall}
+              aria-label={t.endAria}
+              className="flex min-h-14 items-center justify-center gap-3 rounded-xl bg-red-700 px-8 text-xl font-bold text-white transition hover:bg-red-800 active:scale-[0.98]"
             >
-              {phone}
-            </a>
-          </p>
-        )}
-      </section>
+              <HangUpIcon />
+              {t.end}
+            </button>
+          )}
 
-      {(inCall || lines.length > 0 || actions.length > 0) && (
-        <div className="grid gap-6 lg:grid-cols-2">
+          {!configured && <Notice tone="amber">{t.notSetup}</Notice>}
+          {problem === "mic-blocked" && <MicHelp t={t} onRetry={startCall} onClose={() => setProblem(null)} />}
+          {problem === "no-mic" && <Notice tone="red">{t.noMic}</Notice>}
+          {problem === "failed" && <Notice tone="red">{t.callFailed}</Notice>}
+
+          {phone && (
+            <p className="text-lg text-muted">
+              {t.orCall}{" "}
+              <a
+                href={`tel:${phone.replace(/[^\d+]/g, "")}`}
+                className="whitespace-nowrap font-bold text-navy underline underline-offset-4"
+              >
+                {phone}
+              </a>
+              <span className="block text-base">{t.anyPhone}</span>
+            </p>
+          )}
+        </section>
+      </div>
+
+      {/* The conversation: right column on desktop, under the button on phones. Before a call it suggests questions. */}
+      <div className="flex flex-col gap-6 lg:col-start-2 lg:row-span-2 lg:row-start-1">
+        {showConversation ? (
           <Transcript t={t} lines={lines} partial={partial} />
-          <ActionsPanel t={t} lang={lang} actions={actions} />
-        </div>
-      )}
+        ) : (
+          <section aria-labelledby="try-title" className="rounded-xl border border-line bg-surface">
+            <h2 id="try-title" className="border-b border-line px-5 py-4 text-lg font-bold">
+              {t.tryAsking}
+            </h2>
+            <ul className="divide-y divide-line">
+              {EXAMPLES.map((q) => (
+                <li key={q} className="px-5 py-4 text-lg">
+                  {q}
+                </li>
+              ))}
+            </ul>
+          </section>
+        )}
+        {(inCall || actions.length > 0) && <ActionsPanel t={t} lang={lang} actions={actions} />}
+      </div>
+
+      <section aria-labelledby="features-title" className="border-t border-line pt-8 lg:col-start-1 lg:row-start-2">
+          <h2 id="features-title" className="text-lg font-bold">
+            {t.featuresLabel}
+          </h2>
+          <dl className="mt-4 grid gap-x-8 gap-y-5 sm:grid-cols-2">
+            {t.features.map((f) => (
+              <div key={f.title}>
+                <dt className="font-bold">{f.title}</dt>
+                <dd className="mt-1 text-muted">{f.text}</dd>
+              </div>
+            ))}
+          </dl>
+      </section>
     </div>
+  );
+}
+
+function Notice({ tone, children }: { tone: "amber" | "red"; children: React.ReactNode }) {
+  const style = tone === "amber" ? "border-amber-300 bg-amber-50 text-amber-900" : "border-red-300 bg-red-50 text-red-900";
+  return (
+    <p role={tone === "red" ? "alert" : "status"} className={`max-w-md rounded-lg border px-4 py-3 text-lg ${style}`}>
+      {children}
+    </p>
   );
 }
 
@@ -270,20 +312,6 @@ async function checkMicrophone(): Promise<"ok" | "mic-blocked" | "no-mic"> {
 function isPermissionError(e: unknown): boolean {
   const text = JSON.stringify(e ?? "").toLowerCase();
   return text.includes("permission") || text.includes("notallowed");
-}
-
-/** Swirling colour and a soft highlight inside the orb. */
-function OrbLayers() {
-  return (
-    <>
-      <span aria-hidden className="orb-swirl" />
-      <span aria-hidden className="orb-shine" />
-    </>
-  );
-}
-
-function setVolume(el: HTMLElement | null, v: number) {
-  el?.style.setProperty("--vol", String(Math.min(1, Math.max(0, v * 1.6))));
 }
 
 function MicIcon({ size }: { size: number }) {
