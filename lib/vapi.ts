@@ -11,12 +11,11 @@ export interface ToolCall {
   args: Record<string, unknown>;
 }
 
-/** True if the request carries our secret (x-vapi-secret header, or Authorization: Bearer). */
+/** True if the x-vapi-secret header equals VAPI_SERVER_SECRET. */
 export function isAuthorized(req: Request): boolean {
   const secret = process.env.VAPI_SERVER_SECRET;
   if (!secret) return false;
-  const given =
-    req.headers.get("x-vapi-secret") ?? req.headers.get("authorization")?.replace(/^Bearer\s+/i, "") ?? "";
+  const given = req.headers.get("x-vapi-secret") ?? "";
   const a = Buffer.from(given);
   const b = Buffer.from(secret);
   return a.length === b.length && timingSafeEqual(a, b);

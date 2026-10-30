@@ -1,21 +1,14 @@
-// Vapi tool: search_web(query) -> one short spoken answer, grounded with Google Search via Gemini.
-// Gemini docs: https://ai.google.dev/gemini-api/docs/google-search
+// Vapi tool: search_web(query) -> one short spoken answer from a Tavily web search.
+// Vapi format:   https://docs.vapi.ai/tools/custom-tools
+// Tavily format: https://docs.tavily.com/documentation/api-reference/endpoint/search
 
 import { isAuthorized, oneLine, readToolCalls } from "@/lib/vapi";
-import { cleanForSpeech, sourceName } from "@/lib/speech";
+import { cleanForSpeech, websiteName } from "@/lib/speech";
 
 export const maxDuration = 15;
 
-const MODEL = process.env.SEARCH_MODEL ?? "gemini-3.5-flash-lite";
 const TIMEOUT_MS = 8000;
 const SORRY = "Samahani, sikupata habari hiyo sasa hivi.";
-
-const INSTRUCTIONS = `You answer questions for a phone voice assistant in Kenya.
-Use Google Search. Assume a Kenyan context (prices in KES, Kenyan news, places, weather and services) unless the question clearly says otherwise.
-Reply in the same language as the question (Kiswahili, English or Sheng).
-Give ONE short answer: at most 2 sentences and under 28 words.
-Plain spoken words only: no links, no lists, no markdown, no brackets, no symbols. Write "shilingi" or "KES" before amounts.
-If the search does not give a clear answer, say you are not sure. Never make up numbers.`;
 
 export async function POST(req: Request) {
   if (!isAuthorized(req)) {
@@ -41,42 +34,44 @@ export async function POST(req: Request) {
 }
 
 async function searchWeb(query: string): Promise<string> {
-  const key = process.env.GEMINI_API_KEY;
+  const key = process.env.TAVILY_API_KEY;
   if (!key) return SORRY;
 
   try {
-    const res = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent`,
-      {
-        method: "POST",
-        headers: { "x-goog-api-key": key, "Content-Type": "application/json" },
-        body: JSON.stringify({
-          systemInstruction: { parts: [{ text: INSTRUCTIONS }] },
-          contents: [{ role: "user", parts: [{ text: query }] }],
-          tools: [{ google_search: {} }],
-        }),
-        signal: AbortSignal.timeout(TIMEOUT_MS),
-      }
-    );
+    const res = await fetch("https://api.tavily.com/search", {
+      method: "POST",
+      headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
+      body: JSON.stringify({
+        query: withKenya(query),
+        search_depth: "basic",
+        max_results: 3,
+        include_answer: true,
+      }),
+      signal: AbortSignal.timeout(TIMEOUT_MS),
+    });
     if (!res.ok) {
-      console.error("search_web: Gemini", res.status, (await res.text()).slice(0, 300));
+      console.error("search_web: Tavily", res.status, (await res.text()).slice(0, 300));
       return SORRY;
     }
 
-    const data = await res.json();
-    const candidate = data.candidates?.[0];
-    const text: string = (candidate?.content?.parts ?? [])
-      .map((p: { text?: string }) => p.text ?? "")
-      .join(" ");
-    const chunks: { web?: { title?: string; uri?: string } }[] = candidate?.groundingMetadata?.groundingChunks ?? [];
-
-    const answer = cleanForSpeech(text);
+    const data: { answer?: string; results?: { url?: string }[] } = await res.json();
+    const answer = cleanForSpeech(data.answer ?? "");
     if (!answer) return SORRY;
 
-    const source = chunks.map((c) => sourceName(c.web?.title)).find(Boolean);
+    const source = websiteName(data.results?.[0]?.url);
     return oneLine(source ? `${answer} Kulingana na ${source}.` : answer);
   } catch (e) {
     console.error("search_web:", e instanceof Error ? e.name : e);
     return SORRY;
   }
+}
+
+// Other countries (English and Kiswahili names). If none is named, we search about Kenya.
+const OTHER_COUNTRIES =
+  /\b(tanzania|uganda|rwanda|burundi|ethiopia|somalia|sudan|nigeria|ghana|south africa|afrika kusini|egypt|misri|congo|drc|zambia|malawi|mozambique|zimbabwe|usa|america|united states|marekani|uk|britain|england|uingereza|china|uchina|india|uhindi|japan|japani|germany|ujerumani|france|ufaransa|russia|urusi|ukraine|israel|iran|saudi|uae|dubai|qatar|canada|australia|brazil)\b/i;
+
+/** Add "Kenya" unless the query already says Kenya or names another country. */
+function withKenya(query: string): string {
+  if (/\bkenya\b/i.test(query) || OTHER_COUNTRIES.test(query)) return query;
+  return `${query} Kenya`;
 }
