@@ -203,6 +203,20 @@ Steps 1 to 3 use the tools marked 🚧 above. Until those are finished, Sema ans
 3. **Reminder:** "Nikumbushe baada ya dakika moja kunywa maji." → a reminder after 1 minute.
 4. **Judge's choice:** ask anything, for example "How do I cook pilau?"
 
+## Photo credits
+
+The example stories on the home page use real photos from Wikimedia Commons. The stories are illustrations; the people in the photos are not the people in the stories. Photos were resized and cropped.
+
+| Photo | Author | License |
+|---|---|---|
+| [Smallholder Dairy Farmer](https://commons.wikimedia.org/wiki/File:Smallholder_Dairy_Farmer.jpg) | LishaBora2017 | [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0) |
+| [Women smallholder farmers in Kenya](https://commons.wikimedia.org/wiki/File:Women_smallholder_farmers_in_Kenya.jpg) | McKay Savage | [CC BY 2.0](https://creativecommons.org/licenses/by/2.0) |
+| [Kenya IRS Feature 1](https://commons.wikimedia.org/wiki/File:Kenya_IRS_Feature_1_(35876918002).jpg) | President's Malaria Initiative | Public domain |
+| [Signal Searching - Kenya](https://commons.wikimedia.org/wiki/File:Signal_Searching_-_Kenya_(16437544653).jpg) | CDC Global | [CC BY 2.0](https://creativecommons.org/licenses/by/2.0) |
+| [Elder Maasai woman during community dialogue in Kajiado County](https://commons.wikimedia.org/wiki/File:Elder_Maasai_woman_during_community_dialogue_in_Kajiado_County.jpg) | Mark Myles Mugambi | [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0) |
+
+Facts on the home page: feature phone numbers from the Communications Authority of Kenya (June 2026, via [TechTrendsKE](https://techtrendske.co.ke/2026/09/19/kenya-mobile-market-88-million-sim-smartphones/)); small-farm share from the Economic Survey 2023 (via [The Star](https://the-star.co.ke/business/2023-10-23-more-small-scale-farmers-shift-to-irrigation-to-boost-revenues)).
+
 ## Team
 
 Built by **Leon** in Nairobi, Kenya 🇰🇪

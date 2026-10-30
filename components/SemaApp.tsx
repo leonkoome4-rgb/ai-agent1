@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { STRINGS, type Lang } from "@/lib/i18n";
 import CallExperience from "./CallExperience";
+import Stories from "./Stories";
 
 const LANGS: { id: Lang; label: string }[] = [
   { id: "sw", label: "Kiswahili" },
@@ -52,8 +53,11 @@ export default function SemaApp({ phone, assistantId }: { phone?: string; assist
         </div>
       </header>
 
-      <main id="main" className="mx-auto w-full max-w-6xl flex-1 px-5 py-8 sm:py-12">
-        <CallExperience t={t} lang={lang} phone={phone} assistantId={assistantId} />
+      <main id="main" className="flex-1">
+        <div className="mx-auto w-full max-w-6xl px-5 py-8 sm:py-12">
+          <CallExperience t={t} lang={lang} phone={phone} assistantId={assistantId} />
+        </div>
+        <Stories lang={lang} t={t} />
       </main>
 
       <footer className="border-t border-line bg-surface">
